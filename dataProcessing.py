@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 from IPython.display import Audio
+from sklearn.preprocessing import OneHotEncoder
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -34,6 +35,7 @@ def loadDatasets(path):
     return paths, labels
 
 def createDataframe(paths, labels):
+    """ Create dataframe from the given dataset """
     dataframe = pandas.DataFrame()
     dataframe['speech'] = paths
     dataframe['label'] = labels
@@ -44,18 +46,21 @@ def createDataframe(paths, labels):
     return dataframe
 
 def showDataCountGraph(data):
+    """ Display the number of data for each emotion """
     sns.countplot(data)
     plt.xlabel('Emotions')
     plt.ylabel('Data counts')
     plt.show()
 
 def showWaveplot(data, sampleRate, emotion):
+    """ Show the wave plot of a sound file """
     plt.figure(figsize=(10, 4))
     plt.title(emotion, size=20)
     librosa.display.waveshow(data, sr=sampleRate)
     plt.show()
 
 def showSpectogram(data, sampleRate, emotion):
+    """ Show the spectogram of a sound file """
     x = librosa.stft(data)
     xdb = librosa.amplitude_to_db(abs(x))
 
@@ -78,13 +83,22 @@ def extractMFCC(filename):
 
 def extractMFCCfromAllFiles(dataframe):
     x_mfcc = dataframe['speech'].apply(lambda x: extractMFCC(x))
-    return x_mfcc
+    x = [x for x in x_mfcc]
+    x = numpy.array(x)
+    x = numpy.expand_dims(x, -1)
+    print(x.shape)
+
+    enc = OneHotEncoder()
+    y = enc.fit_transform(dataframe[['label']])
+    y = y.toarray()
+    print(y.shape)
 
 def main():
     #printAllSoundFiles('./datasets')
     paths, labels = loadDatasets('./datasets')
     dataframe = createDataframe(paths, labels)
-    #showDataCountGraph(dataframe['label'])
-    #showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
+    # showDataCountGraph(dataframe['label'])
+    # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
+    extractMFCCfromAllFiles(dataframe)
 
 main()
