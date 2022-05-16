@@ -7,6 +7,8 @@ import librosa
 import librosa.display
 from IPython.display import Audio
 from sklearn.preprocessing import OneHotEncoder
+from keras.models import Sequential
+from keras.layers import Dense, LSTM, Dropout
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -86,12 +88,33 @@ def extractMFCCfromAllFiles(dataframe):
     x = [x for x in x_mfcc]
     x = numpy.array(x)
     x = numpy.expand_dims(x, -1)
-    print(x.shape)
+    # print(x.shape)
+    # print(x[0])
 
     enc = OneHotEncoder()
     y = enc.fit_transform(dataframe[['label']])
     y = y.toarray()
-    print(y.shape)
+    # print(y.shape)
+    # print(y[0])
+    return x, y
+
+def createModel():
+    model = Sequential([
+        LSTM(256, return_sequences=False, input_shape=(40,1)),
+        Dropout(0.2),
+        Dense(128, activation='relu'),
+        Dropout(0.2),
+        Dense(64, activation='relu'),
+        Dropout(0.2),
+        Dense(7, activation='softmax')
+    ])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.summary()
+    return model
+
+def trainModel(x, y, model):
+    history = model.fit(x, y, validation_split=0.2, epochs=50, batch_size=64)
+    print(history)
 
 def main():
     #printAllSoundFiles('./datasets')
@@ -99,6 +122,9 @@ def main():
     dataframe = createDataframe(paths, labels)
     # showDataCountGraph(dataframe['label'])
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
-    extractMFCCfromAllFiles(dataframe)
+    x, y = extractMFCCfromAllFiles(dataframe)
+
+    model = createModel()
+    trainModel(x, y, model)
 
 main()
