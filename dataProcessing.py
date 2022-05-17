@@ -7,6 +7,7 @@ import librosa
 import librosa.display
 from IPython.display import Audio
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout
 import warnings
@@ -113,7 +114,7 @@ def createModel():
     return model
 
 def trainModel(x, y, model):
-    history = model.fit(x, y, validation_split=0.2, epochs=50, batch_size=64)
+    history = model.fit(x, y, validation_split=0.2, epochs=5, batch_size=64)
     print(history)
 
 def main():
@@ -122,9 +123,24 @@ def main():
     dataframe = createDataframe(paths, labels)
     # showDataCountGraph(dataframe['label'])
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
-    x, y = extractMFCCfromAllFiles(dataframe)
+    df_train, df_test = train_test_split(dataframe, test_size=0.2)
+    x_train, y_train = extractMFCCfromAllFiles(df_train)
+    x_test, y_test = extractMFCCfromAllFiles(df_test)
 
-    model = createModel()
-    trainModel(x, y, model)
+    print("DF Test:", df_test)
+
+    # model = createModel()
+    # trainModel(x_train, y_train, model)
+
+    # test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+
+    # print('\nTest accuracy:', test_acc)
+
+    #probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
+    #predictions = probability_model.predict(test_images)
+
+    print("Random x_test: ", x_test[5])
+    prediction = model.predict(x_test[5])
+    print("Prediction result: ", prediction)
 
 main()
