@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
+import tensorflow as tf
 from IPython.display import Audio
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
@@ -12,6 +13,8 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout
 import warnings
 warnings.filterwarnings('ignore')
+
+EMOTION = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
 
 def printAllSoundFiles(path):
     for dirname, _, filenames in os.walk(folderPath):
@@ -84,7 +87,7 @@ def extractMFCC(filename):
     mfcc = numpy.mean(librosa.feature.mfcc(y=data, sr=sampleRate, n_mfcc=40).T, axis=0)
     return mfcc
 
-def extractMFCCfromAllFiles(dataframe):
+def extractMFCCfromAllFiles(dataframe, enc):
     x_mfcc = dataframe['speech'].apply(lambda x: extractMFCC(x))
     x = [x for x in x_mfcc]
     x = numpy.array(x)
@@ -92,8 +95,9 @@ def extractMFCCfromAllFiles(dataframe):
     # print(x.shape)
     # print(x[0])
 
-    enc = OneHotEncoder()
     y = enc.fit_transform(dataframe[['label']])
+    # y_labels = enc.inverse_transform(y)
+    # print("y_labels: ", y_labels)
     y = y.toarray()
     # print(y.shape)
     # print(y[0])
@@ -117,30 +121,43 @@ def trainModel(x, y, model):
     history = model.fit(x, y, validation_split=0.2, epochs=5, batch_size=64)
     print(history)
 
+def getPredictedEmotion(prediction_result):
+    highest_prediction_index = numpy.argmax(prediction_result)
+    return EMOTION[highest_prediction_index]
+
 def main():
-    #printAllSoundFiles('./datasets')
+    encoder = OneHotEncoder()
+
+    # printAllSoundFiles('./datasets')
     paths, labels = loadDatasets('./datasets')
     dataframe = createDataframe(paths, labels)
     # showDataCountGraph(dataframe['label'])
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
     df_train, df_test = train_test_split(dataframe, test_size=0.2)
-    x_train, y_train = extractMFCCfromAllFiles(df_train)
-    x_test, y_test = extractMFCCfromAllFiles(df_test)
+    # x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
+    x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
 
-    print("DF Test:", df_test)
+    # print("DF Test:", df_test)
 
-    # model = createModel()
-    # trainModel(x_train, y_train, model)
+    #model = createModel()
+    #trainModel(x_train, y_train, model)
 
-    # test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+    #model.save('saved_model/ser_model')
+    loadedModel = tf.keras.models.load_model('saved_model/ser_model')
 
-    # print('\nTest accuracy:', test_acc)
+    test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
+
+    print('\nTest accuracy:', test_acc)
 
     #probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
     #predictions = probability_model.predict(test_images)
 
-    print("Random x_test: ", x_test[5])
-    prediction = model.predict(x_test[5])
-    print("Prediction result: ", prediction)
+    idx = 10
+    prediction = loadedModel.predict(x_test)
+    print("Prediction result: ", prediction[idx])
+    prediction_result = prediction[idx]
+    print("y_test: ", y_test[idx])
+    print("Predicted:", getPredictedEmotion(prediction_result))
+    print("Expected:",getPredictedEmotion(y_test[idx]))
 
 main()

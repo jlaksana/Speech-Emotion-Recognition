@@ -1,6 +1,7 @@
 # All audio files
 *.wav
 dataverse_files/
+datasets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
