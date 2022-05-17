@@ -8,4 +8,4 @@ myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=1)
 
 sd.wait()  # Wait until recording is finished
 print("Done")
-write('recordings/new_sound.wav', fs, myrecording)  # Save as WAV file 
+write('new_sound.wav', fs, myrecording)  # Save as WAV file 
