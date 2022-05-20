@@ -10,7 +10,7 @@ from IPython.display import Audio
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Dropout
+from keras.layers import Dense, LSTM, Dropout, Input, SimpleRNN
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -103,7 +103,8 @@ def extractMFCCfromAllFiles(dataframe, enc):
     # print(y[0])
     return x, y
 
-def createModel():
+def createLSTMModel():
+    """Create a Long Short-term Model"""
     model = Sequential([
         LSTM(256, return_sequences=False, input_shape=(40,1)),
         Dropout(0.2),
@@ -111,6 +112,31 @@ def createModel():
         Dropout(0.2),
         Dense(64, activation='relu'),
         Dropout(0.2),
+        Dense(7, activation='softmax')
+    ])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.summary()
+    return model
+
+def createFFNNModel():
+    """Create a basic FeedForward Neural Network"""
+    model = Sequential([
+        Input(shape=(40,1)),
+        Dense(256, activation='relu'),
+        Dense(128, activation='relu'),
+        Dense(64, activation='relu'),
+        Dense(7, activation='softmax')
+    ])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.summary()
+    return model
+
+def createRNNModel():
+    """Create a Convolutional Neural Network"""
+    model = Sequential([
+        Input(shape=(40,1)),
+        SimpleRNN(256, return_sequences=True, activation='relu'),
+        SimpleRNN(256, activation='relu'),
         Dense(7, activation='softmax')
     ])
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -134,26 +160,27 @@ def main():
     # showDataCountGraph(dataframe['label'])
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
     df_train, df_test = train_test_split(dataframe, test_size=0.2)
-    # x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
+    x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
     x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
 
     # print("DF Test:", df_test)
 
-    #model = createModel()
-    #trainModel(x_train, y_train, model)
+    # model = createLSTMModel()
+    # model = createFFNNModel()
+    model = createRNNModel();
+    trainModel(x_train, y_train, model)
 
-    #model.save('saved_model/ser_model')
-    loadedModel = tf.keras.models.load_model('saved_model/ser_model')
+    # model.save('saved_models/lstm_model')
+    # model.save('saved_models/nn_model')
+    model.save('saved_models/rnn_model')
+    #loadedModel = tf.keras.models.load_model('saved_model/ser_model')
 
-    test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
+    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
 
     print('\nTest accuracy:', test_acc)
 
-    #probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
-    #predictions = probability_model.predict(test_images)
-
     idx = 10
-    prediction = loadedModel.predict(x_test)
+    prediction = model.predict(x_test)
     print("Prediction result: ", prediction[idx])
     prediction_result = prediction[idx]
     print("y_test: ", y_test[idx])
