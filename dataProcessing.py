@@ -14,6 +14,10 @@ from keras.layers import Dense, LSTM, Dropout, Input, SimpleRNN
 import warnings
 warnings.filterwarnings('ignore')
 
+"""
+TODO: 
+"""
+
 EMOTION = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
 
 def printAllSoundFiles(path):
