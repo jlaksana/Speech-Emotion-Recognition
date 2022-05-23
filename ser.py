@@ -1,6 +1,5 @@
 from tkinter import *
 import tensorflow as tf
-import numpy as numpy
 from dataProcessing import *
 import warnings
 warnings.filterwarnings('ignore')
@@ -8,10 +7,11 @@ warnings.filterwarnings('ignore')
 emoteColors = {
     "Neutral": "black",
     "Happy": "#ffd966",
-    "Anger": "red",
+    "Angry": "red",
     "Disgust": "#6aa84f",
     "Fear": "#a64d79",
-    "Sad": "blue"
+    "Sad": "blue",
+    "Pleasantly surprised": "orange"
 }
 
 def guiMain():
@@ -27,14 +27,13 @@ def guiMain():
         # determine emotion
         btnText.set("Loading...")
         result = extractRecordedSound("recording0.wav")
-        model.summary()
         prediction = model.predict(result)
 
-        confidence, newEmotion = getPredictedEmotion(prediction[0])
+        newEmotion, confidence = getPredictedEmotion(prediction[0])
         emotionLabel["text"] = newEmotion
         emotionLabel["fg"] = emoteColors[newEmotion]
 
-        confidenceLabel["text"] = f"{confidence}% Confidence"
+        confidenceLabel["text"] = f"{(confidence*100):.2f}% Confidence"
 
         btnText.set("Record")
         recordBtn["state"] = NORMAL
