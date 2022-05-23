@@ -14,6 +14,10 @@ from keras.layers import Dense, LSTM, Dropout, Input, SimpleRNN
 import warnings
 warnings.filterwarnings('ignore')
 
+import sounddevice as sd
+from scipy.io.wavfile import write
+import wavio as wv
+
 """
 TODO: 
 """
@@ -155,6 +159,22 @@ def getPredictedEmotion(prediction_result):
     highest_prediction_index = numpy.argmax(prediction_result)
     return EMOTION[highest_prediction_index]
 
+def recordSound():
+    freq = 44100
+    duration = 5
+    print("Recording...")
+    recording = sd.rec(int(duration*freq), samplerate=freq, channels=1)
+    sd.wait()
+    print("Finished recording...")
+    write("recording0.wav", freq, recording)
+
+def extractRecordedSound(filename):
+    mfcc = extractMFCC(filename)
+    x = [mfcc]
+    x = numpy.array(x)
+    x = numpy.expand_dims(x, -1)
+    return x
+
 def main():
     encoder = OneHotEncoder()
 
@@ -164,31 +184,42 @@ def main():
     # showDataCountGraph(dataframe['label'])
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
     df_train, df_test = train_test_split(dataframe, test_size=0.2)
-    x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
-    x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
+    # x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
+    # x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
 
     # print("DF Test:", df_test)
 
     # model = createLSTMModel()
     # model = createFFNNModel()
-    model = createRNNModel();
-    trainModel(x_train, y_train, model)
+    # model = createRNNModel();
+    # trainModel(x_train, y_train, model)
 
     # model.save('saved_models/lstm_model')
     # model.save('saved_models/nn_model')
-    model.save('saved_models/rnn_model')
-    #loadedModel = tf.keras.models.load_model('saved_model/ser_model')
+    # model.save('saved_models/rnn_model')
+    loadedModel = tf.keras.models.load_model('saved_models/lstm_model')
+    #loadedModel = tf.keras.models.load_model('saved_models/nn_model')
+    #loadedModel = tf.keras.models.load_model('saved_models/rnn_model')
 
-    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+    # test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
 
-    print('\nTest accuracy:', test_acc)
+    # print('\nTest accuracy:', test_acc)
 
-    idx = 10
-    prediction = model.predict(x_test)
-    print("Prediction result: ", prediction[idx])
-    prediction_result = prediction[idx]
-    print("y_test: ", y_test[idx])
-    print("Predicted:", getPredictedEmotion(prediction_result))
-    print("Expected:",getPredictedEmotion(y_test[idx]))
+    # idx = 0
+    # prediction = loadedModel.predict(x_test)
+    # # print("Prediction result: ", prediction[idx])
+    # prediction_result = prediction[idx]
+    # # print("y_test: ", y_test[idx])
+    # print("Predicted:", getPredictedEmotion(prediction_result))
+    # print("Expected:",getPredictedEmotion(y_test[idx]))
+
+    # Recorded audio
+
+    #recordSound()
+    filename = "recording0.wav"
+    print("Predicting recorded audio:")
+    result = extractRecordedSound("datasets/OAF_neutral/OA_bite_neutral.wav")
+    prediction = loadedModel.predict(result)
+    print("Prediction result:", getPredictedEmotion(prediction[0]))
 
 main()
