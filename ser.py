@@ -1,7 +1,10 @@
-import random
 from tkinter import *
+import tensorflow as tf
+import numpy as numpy
+from dataProcessing import *
+import warnings
+warnings.filterwarnings('ignore')
 
-emotions = ["Neutral", "Happy", "Anger", "Disgust", "Fear", "Sad"]
 emoteColors = {
     "Neutral": "black",
     "Happy": "#ffd966",
@@ -11,29 +14,31 @@ emoteColors = {
     "Sad": "blue"
 }
 
+def guiMain():
+    model = loadModel()
 
-def onClick():
-    print("record button was clicked")
-    recordBtn["state"] = DISABLED
-    # record audio
-    btnText.set("Recording")
+    def onClick():
+        print("record button was clicked")
+        recordBtn["state"] = DISABLED
+        # record audio
+        btnText.set("Recording")
+        recordSound()
 
-    # determine emotion
-    btnText.set("Loading...")
+        # determine emotion
+        btnText.set("Loading...")
+        result = extractRecordedSound("recording0.wav")
+        model.summary()
+        prediction = model.predict(result)
 
-    i = random.randint(0, 5)
-    newEmotion = emotions[i]
-    emotionLabel["text"] = newEmotion
-    emotionLabel["fg"] = emoteColors[newEmotion]
+        confidence, newEmotion = getPredictedEmotion(prediction[0])
+        emotionLabel["text"] = newEmotion
+        emotionLabel["fg"] = emoteColors[newEmotion]
 
-    confidence = random.randint(0, 100)
-    confidenceLabel["text"] = f"{confidence}% Confidence"
+        confidenceLabel["text"] = f"{confidence}% Confidence"
 
-    btnText.set("Record")
-    recordBtn["state"] = NORMAL
+        btnText.set("Record")
+        recordBtn["state"] = NORMAL
 
-
-if __name__ == "__main__":
     root = Tk()
     root.title("Speech Emotion Recognition")
 
@@ -64,3 +69,7 @@ if __name__ == "__main__":
     recordBtn.grid(row=2, column=1)
 
     root.mainloop()
+
+
+if __name__ == "__main__":
+    guiMain();

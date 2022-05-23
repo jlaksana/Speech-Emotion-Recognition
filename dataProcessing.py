@@ -22,7 +22,7 @@ import wavio as wv
 TODO: 
 """
 
-EMOTION = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
+EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
 
 def printAllSoundFiles(path):
     for dirname, _, filenames in os.walk(folderPath):
@@ -157,7 +157,7 @@ def trainModel(x, y, model):
 
 def getPredictedEmotion(prediction_result):
     highest_prediction_index = numpy.argmax(prediction_result)
-    return EMOTION[highest_prediction_index]
+    return EMOTIONS[highest_prediction_index], prediction_result[highest_prediction_index]
 
 def recordSound():
     freq = 44100
@@ -174,6 +174,15 @@ def extractRecordedSound(filename):
     x = numpy.array(x)
     x = numpy.expand_dims(x, -1)
     return x
+
+def loadModel():
+    print('loading model...')
+    #model = tf.keras.models.load_model('saved_models/lstm_model')
+    model = tf.keras.models.load_model('saved_models/nn_model')
+    #model = tf.keras.models.load_model('saved_models/rnn_model')
+    model.summary()
+    print('finished loading model')
+    return model
 
 def main():
     encoder = OneHotEncoder()
@@ -197,9 +206,7 @@ def main():
     # model.save('saved_models/lstm_model')
     # model.save('saved_models/nn_model')
     # model.save('saved_models/rnn_model')
-    loadedModel = tf.keras.models.load_model('saved_models/lstm_model')
-    #loadedModel = tf.keras.models.load_model('saved_models/nn_model')
-    #loadedModel = tf.keras.models.load_model('saved_models/rnn_model')
+    loadedModel = loadModel()
 
     # test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
 
@@ -215,11 +222,13 @@ def main():
 
     # Recorded audio
 
-    #recordSound()
+    recordSound()
     filename = "recording0.wav"
     print("Predicting recorded audio:")
-    result = extractRecordedSound("datasets/OAF_neutral/OA_bite_neutral.wav")
+    result = extractRecordedSound(filename)
     prediction = loadedModel.predict(result)
-    print("Prediction result:", getPredictedEmotion(prediction[0]))
+    print("Prediction result:", getPredictedEmotion(prediction[0])[0])
+    print("Confidence result:", getPredictedEmotion(prediction[0])[1])
 
-main()
+if __name__ == '__main__':
+    main()
