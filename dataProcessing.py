@@ -161,7 +161,7 @@ def getPredictedEmotion(prediction_result):
 
 def recordSound():
     freq = 44100
-    duration = 5
+    duration = 3
     print("Recording...")
     recording = sd.rec(int(duration*freq), samplerate=freq, channels=1)
     sd.wait()
