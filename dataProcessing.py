@@ -13,21 +13,10 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout, Input, SimpleRNN
 import warnings
 warnings.filterwarnings('ignore')
-
 import sounddevice as sd
 from scipy.io.wavfile import write
-import wavio as wv
-
-"""
-TODO: 
-"""
 
 EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
-
-def printAllSoundFiles(path):
-    for dirname, _, filenames in os.walk(folderPath):
-        for filename in filenames:
-            print(os.path.join(dirname, filename))
 
 def loadDatasets(path):
     """ 
@@ -82,17 +71,20 @@ def showSpectogram(data, sampleRate, emotion):
     plt.show()
 
 def showWaveplotAndSpectogramForEmotion(dataframe, emotion):
+    """ Show the waveplot and spectogram of a given emotion """
     path = numpy.array(dataframe['speech'][dataframe['label']==emotion])[0]
     data, sampleRate = librosa.load(path)
     showWaveplot(data, sampleRate, emotion)
     showSpectogram(data, sampleRate, emotion)
 
 def extractMFCC(filename):
+    """ Calculates the Mel-frequency cepstral coefficients of a wav file """
     data, sampleRate = librosa.load(filename, duration=3, offset=0.5)
     mfcc = numpy.mean(librosa.feature.mfcc(y=data, sr=sampleRate, n_mfcc=40).T, axis=0)
     return mfcc
 
 def extractMFCCfromAllFiles(dataframe, enc):
+    """ Calculates all the Mel-frequency cepstral coefficients of a dataframe of wav files """
     x_mfcc = dataframe['speech'].apply(lambda x: extractMFCC(x))
     x = [x for x in x_mfcc]
     x = numpy.array(x)
@@ -131,7 +123,7 @@ def createFFNNModel():
     return model
 
 def createRNNModel():
-    """Create a Convolutional Neural Network"""
+    """Create a Recurrent Neural Network"""
     model = Sequential([
         Input(shape=(40,1)),
         SimpleRNN(256, return_sequences=True, activation='relu'),
@@ -142,15 +134,18 @@ def createRNNModel():
     model.summary()
     return model
 
-def trainModel(x, y, model):
-    history = model.fit(x, y, validation_split=0.2, epochs=5, batch_size=64)
+def trainModel(data, labels, model):
+    """ Fits a given model and displays its history """
+    history = model.fit(data, labels, validation_split=0.2, epochs=5, batch_size=64)
     print(history)
 
 def getPredictedEmotion(prediction_result):
+    """ Given an array of predictions, returns the predicted emotion and confidence """
     highest_prediction_index = numpy.argmax(prediction_result)
     return EMOTIONS[highest_prediction_index], prediction_result[highest_prediction_index]
 
 def recordSound():
+    """ When called, uses the user's microphone to record for three seconds """
     freq = 44100
     duration = 3
     print("Recording...")
@@ -160,6 +155,7 @@ def recordSound():
     write("recording0.wav", freq, recording)
 
 def extractRecordedSound(filename):
+    """ Given the recorded filename, returns a numpy array of the Mel-frequency cepstral coefficients """
     mfcc = extractMFCC(filename)
     x = [mfcc]
     x = numpy.array(x)
@@ -167,11 +163,13 @@ def extractRecordedSound(filename):
     return x
 
 def saveModel(model, model_name):
+    """ Saves a given pre-trained model into the saved_models folder """
     print('saving model...')
     model.save('saved_models/' + model_name)
     print('finished saving model')
 
 def loadModel(model_name):
+    """ Loads a selected pre-trained model and returns the model """
     print('loading model...')
     model = tf.keras.models.load_model('saved_models/' + model_name)
     # model = tf.keras.models.load_model('saved_models/nn_model')
@@ -192,8 +190,7 @@ def main():
     # x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
     x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
 
-    # print("DF Test:", df_test)
-
+    # Create and train model
     # model = createLSTMModel()
     # model = createFFNNModel()
     # model = createRNNModel();
@@ -211,14 +208,11 @@ def main():
 
     idx = 0
     prediction = loadedModel.predict(x_test)
-    # print("Prediction result: ", prediction[idx])
     prediction_result = prediction[idx]
-    # print("y_test: ", y_test[idx])
     print("Predicted:", getPredictedEmotion(prediction_result))
     print("Expected:",getPredictedEmotion(y_test[idx]))
 
     # Recorded audio
-
     # recordSound()
     # filename = "recording0.wav"
     # print("Predicting recorded audio:")

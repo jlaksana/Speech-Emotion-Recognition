@@ -19,6 +19,7 @@ def guiMain():
     model = loadModel(model_name)
 
     def onClick():
+        """ Button on click functionality """
         print("record button was clicked")
         recordBtn["state"] = DISABLED
         # record audio
@@ -30,12 +31,14 @@ def guiMain():
         result = extractRecordedSound("recording0.wav")
         prediction = model.predict(result)
 
+        # Display emotion and confidence
         newEmotion, confidence = getPredictedEmotion(prediction[0])
         emotionLabel["text"] = newEmotion
         emotionLabel["fg"] = emoteColors[newEmotion]
 
         confidenceLabel["text"] = f"{(confidence*100):.2f}% Confidence"
 
+        # Reset button
         btnText.set("Record")
         recordBtn["state"] = NORMAL
 
