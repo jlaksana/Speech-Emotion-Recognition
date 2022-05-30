@@ -20,6 +20,10 @@ Run the GUI Demo using
 `python ser.py`
 **Note: it takes a bit of time for the demo to start up due to tensorflow configurations**
 
+# DataSet
+
+[Toronto Emotional Speech Set (TESS)](https://dataverse.scholarsportal.info/dataset.xhtml?persistentId=doi%3A10.5683%2FSP2%2FE8H2MF)
+
 # Other Notes
 
 See our final presentation [here](https://docs.google.com/presentation/d/14xzIgln7KAkdlYgYYcVYHvMLA9Os-nF2QoFOrIyzGFU/edit?usp=sharing)
