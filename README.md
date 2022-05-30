@@ -18,6 +18,7 @@ Download all required packages using
 Run the GUI Demo using
 
 `python ser.py`
+
 **Note: it takes a bit of time for the demo to start up due to tensorflow configurations**
 
 # DataSet
