@@ -22,7 +22,7 @@ import wavio as wv
 TODO: 
 """
 
-EMOTION = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
+EMOTIONS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Pleasantly surprised', 'Sad']
 
 def printAllSoundFiles(path):
     for dirname, _, filenames in os.walk(folderPath):
@@ -53,9 +53,6 @@ def createDataframe(paths, labels):
     dataframe = pandas.DataFrame()
     dataframe['speech'] = paths
     dataframe['label'] = labels
-    
-    # print(dataframe.head())
-    # print(dataframe['label'].value_counts())
 
     return dataframe
 
@@ -100,15 +97,9 @@ def extractMFCCfromAllFiles(dataframe, enc):
     x = [x for x in x_mfcc]
     x = numpy.array(x)
     x = numpy.expand_dims(x, -1)
-    # print(x.shape)
-    # print(x[0])
 
     y = enc.fit_transform(dataframe[['label']])
-    # y_labels = enc.inverse_transform(y)
-    # print("y_labels: ", y_labels)
     y = y.toarray()
-    # print(y.shape)
-    # print(y[0])
     return x, y
 
 def createLSTMModel():
@@ -157,7 +148,7 @@ def trainModel(x, y, model):
 
 def getPredictedEmotion(prediction_result):
     highest_prediction_index = numpy.argmax(prediction_result)
-    return EMOTION[highest_prediction_index]
+    return EMOTIONS[highest_prediction_index], prediction_result[highest_prediction_index]
 
 def recordSound():
     freq = 44100
@@ -175,6 +166,20 @@ def extractRecordedSound(filename):
     x = numpy.expand_dims(x, -1)
     return x
 
+def saveModel(model, model_name):
+    print('saving model...')
+    model.save('saved_models/' + model_name)
+    print('finished saving model')
+
+def loadModel(model_name):
+    print('loading model...')
+    model = tf.keras.models.load_model('saved_models/' + model_name)
+    # model = tf.keras.models.load_model('saved_models/nn_model')
+    #model = tf.keras.models.load_model('saved_models/rnn_model')
+    model.summary()
+    print('finished loading model')
+    return model
+
 def main():
     encoder = OneHotEncoder()
 
@@ -185,7 +190,7 @@ def main():
     # showWaveplotAndSpectogramForEmotion(dataframe, 'angry')
     df_train, df_test = train_test_split(dataframe, test_size=0.2)
     # x_train, y_train = extractMFCCfromAllFiles(df_train, encoder)
-    # x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
+    x_test, y_test = extractMFCCfromAllFiles(df_test, encoder)
 
     # print("DF Test:", df_test)
 
@@ -197,29 +202,30 @@ def main():
     # model.save('saved_models/lstm_model')
     # model.save('saved_models/nn_model')
     # model.save('saved_models/rnn_model')
-    loadedModel = tf.keras.models.load_model('saved_models/lstm_model')
-    #loadedModel = tf.keras.models.load_model('saved_models/nn_model')
-    #loadedModel = tf.keras.models.load_model('saved_models/rnn_model')
+    model_name = "lstm_model"
+    loadedModel = loadModel(model_name)
 
-    # test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
+    test_loss, test_acc = loadedModel.evaluate(x_test, y_test, verbose=2)
 
-    # print('\nTest accuracy:', test_acc)
+    print('\nTest accuracy:', test_acc)
 
-    # idx = 0
-    # prediction = loadedModel.predict(x_test)
-    # # print("Prediction result: ", prediction[idx])
-    # prediction_result = prediction[idx]
-    # # print("y_test: ", y_test[idx])
-    # print("Predicted:", getPredictedEmotion(prediction_result))
-    # print("Expected:",getPredictedEmotion(y_test[idx]))
+    idx = 0
+    prediction = loadedModel.predict(x_test)
+    # print("Prediction result: ", prediction[idx])
+    prediction_result = prediction[idx]
+    # print("y_test: ", y_test[idx])
+    print("Predicted:", getPredictedEmotion(prediction_result))
+    print("Expected:",getPredictedEmotion(y_test[idx]))
 
     # Recorded audio
 
-    #recordSound()
-    filename = "recording0.wav"
-    print("Predicting recorded audio:")
-    result = extractRecordedSound("datasets/OAF_neutral/OA_bite_neutral.wav")
-    prediction = loadedModel.predict(result)
-    print("Prediction result:", getPredictedEmotion(prediction[0]))
+    # recordSound()
+    # filename = "recording0.wav"
+    # print("Predicting recorded audio:")
+    # result = extractRecordedSound(filename)
+    # prediction = loadedModel.predict(result)
+    # print("Prediction result:", getPredictedEmotion(prediction[0])[0])
+    # print("Confidence result:", getPredictedEmotion(prediction[0])[1])
 
-main()
+if __name__ == '__main__':
+    main()
